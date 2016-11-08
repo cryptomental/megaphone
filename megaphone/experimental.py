@@ -1,7 +1,7 @@
 from steembase.account import PrivateKey
 from steembase.operations import Transfer_to_vesting, Transfer_to_savings, Transfer_from_savings, \
     Cancel_transfer_from_savings, Feed_publish, Witness_update
-from steemtools.node import Node
+from megaphone.node import Node
 
 
 class Transactions(object):
@@ -15,7 +15,7 @@ class Transactions(object):
             **{
                 "from": account_name,
                 "to": to,
-                "amount": "%s STEEM" % amount,
+                "amount": "%s GOLOS" % amount,
             }
         )
         tx = self.steem.constructTx(op, wif)
@@ -71,8 +71,8 @@ class Transactions(object):
             **{
                 "publisher": witness_name,
                 "exchange_rate": {
-                    "base": "%s SBD" % steem_usd_price,
-                    "quote": "1.000 STEEM"
+                    "base": "%s GBG" % steem_usd_price,
+                    "quote": "1.000 GOLOS"
                 }
             }
         )
@@ -88,7 +88,7 @@ class Transactions(object):
                 "url": url,
                 "block_signing_key": signing_key,
                 "props": props,
-                "fee": "0.000 STEEM",
+                "fee": "0.000 GOLOS",
             }
         )
         tx = self.steem.constructTx(op, wif)
@@ -103,5 +103,5 @@ class Transactions(object):
 
     @staticmethod
     def _check_currency(currency):
-        if currency not in ['STEEM', 'SBD']:
+        if currency not in ['GOLOS', 'GBG']:
             raise TypeError("Unsupported currency %s" % currency)

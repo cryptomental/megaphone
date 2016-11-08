@@ -1,9 +1,9 @@
 from pprint import pprint
 
 
-from steemtools.experimental import Transactions
-from steemtools.helpers import read_asset
-from steemtools.node import Node
+from megaphone.experimental import Transactions
+from megaphone.helpers import read_asset
+from megaphone.node import Node
 
 steem = Node().default()
 
@@ -36,11 +36,11 @@ def power_up():
 def update_witness():
     t = Transactions()
     props = {
-        "account_creation_fee": "15.000 STEEM",
+        "account_creation_fee": "3.000 GOLOS",
         "maximum_block_size": 65536,
-        "sbd_interest_rate": 500,
+        "sbd_interest_rate": 100,
     }
-    tx = t.witness_update("furion", "<PUBLIC_POSTING_KEY>", "https://steemdb.com/@furion/witness", props, "<PRIVATE_ACTIVE_KEY>", sim_mode=False)
+    tx = t.witness_update("kiwi", "<PUBLIC_POSTING_KEY>", "https://golos.io/@kiwi/witness", props, "<PRIVATE_ACTIVE_KEY>", sim_mode=False)
     pprint(tx)
 
 

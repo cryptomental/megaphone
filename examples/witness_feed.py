@@ -1,15 +1,15 @@
 import time
 
-from steemtools.experimental import Transactions
-from steemtools.markets import Markets
-from steemtools.node import Node
+from megaphone.experimental import Transactions
+from megaphone.markets import Markets
+from megaphone.node import Node
 
 settings = {
     "sleep_time_seconds": 60,
     "minimum_spread_pct": 1.0,
     "sbd_usd_peg": True,
 }
-witness = "furion"
+witness = "kiwi"
 wif = "<PRIVATE ACTIVE KEY HERE>"
 
 if __name__ == '__main__':
@@ -29,12 +29,12 @@ if __name__ == '__main__':
     while True:
         print("\n" + time.ctime())
         last_price = get_last_published_price()
-        print("Published STEEM/USD price is: " + format(last_price, ".3f"))
+        print("Published GOLOS/USD price is: " + format(last_price, ".3f"))
 
         current_price = markets.steem_usd_implied()
         if settings['sbd_usd_peg']:
             current_price *= markets.sbd_usd_implied()
-        print("Implied STEEM/USD price is: %.3f" % current_price)
+        print("Implied GOLOS/USD price is: %.3f" % current_price)
 
         # if price diverged for more than our defined %, update the feed
         spread = abs(markets.calc_spread(last_price, current_price))
@@ -48,12 +48,12 @@ if __name__ == '__main__':
 
 
 # Mon Sep 19 12:26:20 2016
-# Published STEEM/USD price is: 0.508
-# Current STEEM/USD price is: 0.502
+# Published GOLOS/USD price is: 0.508
+# Current GOLOS/USD price is: 0.502
 # Current Spread Between Prices: 1.118%
 # Updated the witness price feed.
 #
 # Mon Sep 19 12:27:24 2016
-# Published STEEM/USD price is: 0.502
-# Current STEEM/USD price is: 0.502
+# Published GOLOS/USD price is: 0.502
+# Current GOLOS/USD price is: 0.502
 # Current Spread Between Prices: 0.076%

@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from steemtools.blockchain import Blockchain
+from megaphone.blockchain import Blockchain
 
 # parse the entire blockchain
 for event in Blockchain().replay():
@@ -20,10 +20,10 @@ for event in history:
     print("@%s sent %s to @%s" % (payment['from'], payment['amount'], payment['to']))
 
 # Output:
-# @victoriart sent 1.000 SBD to @null
-# @dude sent 5.095 STEEM to @bittrex
-# @devil sent 5.107 STEEM to @poloniex
-# @pinoytravel sent 0.010 SBD to @null
-# @aladdin sent 5.013 STEEM to @poloniex
-# @mrwang sent 31.211 STEEM to @blocktrades
-# @kodi sent 0.030 SBD to @steembingo
+# @victoriart sent 1.000 GBG to @null
+# @dude sent 5.095 GOLOS to @bittrex
+# @devil sent 5.107 GOLOS to @poloniex
+# @pinoytravel sent 0.010 GBG to @null
+# @aladdin sent 5.013 GOLOS to @poloniex
+# @mrwang sent 31.211 GOLOS to @blocktrades
+# @kodi sent 0.030 GBG to @steembingo

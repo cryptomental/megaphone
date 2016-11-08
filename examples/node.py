@@ -1,10 +1,10 @@
 import stopwatch
-from steemtools.node import Node
-from steemtools.base import Account
+from megaphone.node import Node
+from megaphone.base import Account
 
 
 # # default node overloading
-# from steemtools.node import Node
+# from megaphone.node import Node
 #
 # _apis = [
 #     "database_api",
@@ -15,7 +15,7 @@ from steemtools.base import Account
 #     "tag_api",
 # ]
 # Node._default = Steem(
-#      node=os.getenv('STEEM_NODE', "wss://node.steem.ws"),
+#      node=os.getenv('GOLOS_NODE', "wss://node.golos.ws"),
 #      apis=_apis,
 #      expires=600,
 # )

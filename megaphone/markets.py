@@ -4,8 +4,8 @@ from pprint import pprint
 
 import grequests
 import numpy as np
-from steemtools.helpers import parse_payout
-from steemtools.node import Node
+from megaphone.helpers import parse_payout
+from megaphone.node import Node
 
 
 class Tickers(object):

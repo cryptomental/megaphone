@@ -5,18 +5,20 @@ import sys
 
 here = path.abspath(path.dirname(__file__))
 
-assert sys.version_info[0] == 3, "steemtools requires Python > 3"
+assert sys.version_info[0] == 3, "megaphone requires Python > 3"
 
 VERSION = '1.3.2'
 
 setup(
-    name='steemtools',
+    name='megaphone',
     version=VERSION,
-    description='Python Utilities for parsing STEEM blockchain',
+    description='Python Utilities for parsing GOLOS blockchain, forked from SteemTools by @furion',
     long_description=open('README.md').read(),
-    url='https://github.com/Netherdrake/steemtools',
+    url='https://github.com/cryptomental/megaphone',
     author='@furion',
     author_email='_@furion.me',
+    maintainer='@cryptomental',
+    maintainer_email='cryptomental.com@gmail.com',
     license='MIT',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -24,7 +26,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',
     ],
-    keywords='steem steemit',
+    keywords='golos',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment

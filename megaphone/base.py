@@ -9,8 +9,8 @@ import dateutil
 import numpy as np
 import piston
 from dateutil import parser
-from steemtools.helpers import read_asset, parse_payout, time_diff, simple_cache
-from steemtools.node import Node
+from megaphone.helpers import read_asset, parse_payout, time_diff, simple_cache
+from megaphone.node import Node
 from tqdm import tqdm
 
 from werkzeug.contrib.cache import SimpleCache

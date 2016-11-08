@@ -1,6 +1,6 @@
-from steemtools.base import Account
+from megaphone.base import Account
 
-account = Account("furion")
+account = Account("kiwi")
 
 account.get_sp()
 # outputs: 6211.590278675119
