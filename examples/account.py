@@ -1,8 +1,16 @@
+import sys
+
 from megaphone.base import Account
 from megaphone.helpers import parse_payout, is_comment
 
+
 # get all posts and comments from October
-account = Account("kiwi")
+if sys.argv[1]:
+    account_name = sys.argv[1]
+else:
+    account_name = "kiwi"
+
+account = Account(account_name)
 START_DATE = "2016-10-01T00:00:00"
 END_DATE = "2016-11-01T00:00:00"
 
@@ -14,7 +22,7 @@ titles = [x["op"]["title"] for x in posts if not is_comment(x["op"])]
 print(titles)
 
 # get transfers to "null" account
-for event in Account("kiwi").history(filter_by=["transfer"]):
+for event in Account(account_name).history(filter_by=["transfer"]):
     transfer = event["op"]
     if transfer["to"] == "null":
         print("$%.1f :: %s" % (parse_payout(transfer["amount"]),

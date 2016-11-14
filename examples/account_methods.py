@@ -2,7 +2,7 @@ from megaphone.base import Account
 
 account = Account("kiwi")
 
-account.get_sp()
+account.power()
 # outputs: 6211.590278675119
 
 account.reputation()

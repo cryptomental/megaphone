@@ -1,7 +1,6 @@
 import ssl
-
 import websocket
-from piston.steem import Steem
+from piston.steem import Steem as Chain
 
 
 class Node(object):
@@ -26,15 +25,15 @@ class Node(object):
 
     def default(self, **kwargs):
         """
-        This will try local node first, and automatically fallback to public nodes.
+        Try local node first, and automatically fallback to public nodes.
         """
         if self._default:
             return self._default
         nodes = self.find_local_nodes() + self._nodes['public']
-        return Steem(node=nodes, apis=self._apis, **kwargs)
+        return Chain(node=nodes, apis=self._apis, **kwargs)
 
     def public(self, **kwargs):
-        return Steem(node=self._nodes['public'], apis=self._apis, **kwargs)
+        return Chain(node=self._nodes['public'], apis=self._apis, **kwargs)
 
     def _prioritize(self, priority_node):
         return [priority_node].extend([x for x in self._nodes if x != priority_node])

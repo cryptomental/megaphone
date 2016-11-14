@@ -2,7 +2,6 @@ import datetime
 import re
 import time
 
-import dateutil
 from dateutil import parser
 
 from funcy import contextmanager, decorator
@@ -60,7 +59,7 @@ def time_elapsed(time1):
 
 
 def parse_time(block_time):
-    return dateutil.parser.parse(block_time + "UTC").astimezone(datetime.timezone.utc)
+    return parser.parse(block_time + "UTC").astimezone(datetime.timezone.utc)
 
 
 def translate_tag(tag):

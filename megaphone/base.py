@@ -5,69 +5,54 @@ import time
 from collections import namedtuple
 from contextlib import suppress
 
-import dateutil
 import numpy as np
-import piston
 from dateutil import parser
-from megaphone.helpers import read_asset, parse_payout, time_diff, simple_cache
+from megaphone.helpers import parse_payout, read_asset, simple_cache, time_diff
 from megaphone.node import Node
-from tqdm import tqdm
-
+from piston.steem import Post as PistonPost
 from werkzeug.contrib.cache import SimpleCache
 
-base_cache = SimpleCache()  # is this threadsafe?
+
+base_cache = SimpleCache()
+
+
+class AccountError(RuntimeError):
+    pass
 
 
 class Account(object):
-    def __init__(self, account_name, steem=None):
-        if not steem:
-            steem = Node().default()
-        self.steem = steem
+    """
+    Social blockchain account.
+    Currently supported: STEEM and GOLOS.
+    """
+    def __init__(self, account, chaind=None, blockchain="GOLOS"):
+        """
+        Initialize Account object.
 
-        self.name = account_name
-
-        self.converter = Converter(steem=self.steem)
+        :param account: STEEM/GOLOS account name
+        :type account: str
+        :param chaind: Blockchain node instance (steemd/golosd)
+        :type chaind: :py:class:`Node`
+        """
+        if not chaind:
+            chaind = Node().default(blockchain_name=blockchain)
+        self.chaind = chaind
+        self.account = account
+        self.converter = Converter(chaind)
 
         # caches
         self._blog = None
         self._props = None
 
-    def get_props(self):
-        if self._props is None:
-            self._props = self.steem.rpc.get_account(self.name)
-        return self._props
-
-    def get_blog(self):
-        if self._blog is None:
-            def _get_blog(steem, user):
-                state = steem.rpc.get_state("/@%s/blog" % user)
-                posts = state["accounts"][user].get("blog", [])
-                return [piston.steem.Post(steem, "@%s" % x) for x in posts if x]
-            self._blog = _get_blog(self.steem, self.name)
-        return self._blog
-
     @property
-    def sp(self):
-        return self.get_sp()
-
-    @property
-    def rep(self):
-        return self.reputation()
-
-    def get_sp(self):
-        vests = int(parse_payout(self.get_props()['vesting_shares']))
-        return self.converter.vests_to_sp(vests)
-
-    def get_balances(self):
-        my_account_balances = self.steem.get_balances(self.name)
-        return {
-            "steem": parse_payout(my_account_balances["balance"]),
-            "sbd": parse_payout(my_account_balances["sbd_balance"]),
-            "vests": parse_payout(my_account_balances["vesting_shares"]),
-        }
-
     def reputation(self):
-        rep = int(self.get_props()['reputation'])
+        """
+        Account reputation score.
+
+        :return: Reputation score
+        :rtype: float
+        """
+        rep = int(self.get_props()["reputation"])
         if rep < 0:
             return -1
         if rep == 0:
@@ -76,10 +61,114 @@ class Account(object):
         score = (math.log10(abs(rep)) - 9) * 9 + 25
         return float("%.2f" % score)
 
+    @property
+    def power(self):
+        """
+        Account power in STEEM/GOLOS power.
+
+        :return: power value
+        :rtype
+        """
+        vests = int(parse_payout(self.get_props()["vesting_shares"]))
+        return self.converter.vests_to_power(vests)
+
+    @property
     def voting_power(self):
+        """
+        Account voting power.
+
+        :return: voting power value
+        :rtype: float
+        """
         return self.get_props()['voting_power'] / 100
 
-    def number_of_winning_posts(self, skip=1, payout_requirement=300, max_posts=10):
+    @property
+    def followers(self):
+        return [x['follower'] for x in self._get_followers("follower")]
+
+    @property
+    def following(self):
+        return [x['following'] for x in self._get_followers("following")]
+
+    def _get_followers(self, direction="follower", last_user=""):
+        """
+        Return a full list of following/followers.
+
+        :param direction: 'follower' for followers, 'fo
+        :type direction: str
+        :param last_user: account name to start from
+        :type last_user: str
+
+        :return: list of followers
+        """
+        allowed_directions = ["follower", "following"]
+        if direction not in allowed_directions:
+            raise AccountError("Allowed directions : %s" % allowed_directions)
+        followers = self.chaind.rpc.get_followers(self.account, last_user,
+                                                  "blog", 100, api="follow")
+        if len(followers) == 100:
+            followers += self._get_followers(direction,
+                                             followers[-1][direction])[1:]
+        return followers
+
+    @property
+    def balances(self):
+        """
+        Return account's GOLOS, GBG ang GESTS balances.
+
+        STEEM blockchain { "steem", "sbd", "vests" }
+        GOLOS blockchain { "golos", "gbg", "gests" }
+
+        :return: account's balances
+        :rtype: dict
+        """
+        my_account_balances = self.chain.get_balances(self.account)
+        balances = {}
+        if self.blockchain_name == "GOLOS":
+            balances["golos"] = parse_payout(my_account_balances["balance"])
+            balances["gbg"] = parse_payout(my_account_balances["sbd_balance"]),
+            balances["gests"] = parse_payout(my_account_balances["vesting_shares"])
+        elif self.blockchain_name == "STEEM":
+            balances["steem"] = parse_payout(my_account_balances["balance"])
+            balances["sbd"] = parse_payout(my_account_balances["sbd_balance"]),
+            balances["vests"] = parse_payout(my_account_balances["vesting_shares"])
+        return balances
+
+    def get_props(self):
+        """
+        Get account properties.
+
+        :return: Account properties.
+        :rtype: dict
+        """
+        if self._props is None:
+            self._props = self.chain.rpc.get_account(self.account)
+        return self._props
+
+    def get_blog(self):
+        """
+        Get account blog in JSON format.
+
+        :return:
+        """
+        if self._blog is None:
+            def _get_blog(chain, user):
+                state = chain.rpc.get_state("/@%s/blog" % user)
+                posts = state["accounts"][user].get("blog", [])
+                return [PistonPost(chain, "@%s" % x) for x in posts if x]
+            self._blog = _get_blog(self.chain, self.account)
+        return self._blog
+
+    def number_of_winning_posts(self, skip=1, payout_requirement=300,
+                                max_posts=10):
+        """
+        Get number of winning posts.
+
+        :param skip:
+        :param payout_requirement:
+        :param max_posts:
+        :return:
+        """
         winning_posts = 0
         blog = self.get_blog()[skip:max_posts + skip]
         for post in blog:
@@ -91,6 +180,14 @@ class Account(object):
         return nt(winning_posts, len(blog))
 
     def avg_payout_per_post(self, skip=1, max_posts=10):
+        """
+        Return average payout per post.
+
+        :param skip:
+        :param max_posts:
+
+        :return:
+        """
         total_payout = 0
         blog = self.get_blog()[skip:max_posts + skip]
         for post in blog:
@@ -101,7 +198,8 @@ class Account(object):
 
         return total_payout / len(blog)
 
-    def time_to_whale(self, verbose=False, whale_sp=1e5, skip=1, max_posts=10, mean_of_recent=3):
+    def time_to_whale(self, verbose=False, whale_sp=1e5, skip=1, max_posts=10,
+                      mean_of_recent=3):
         blog = self.get_blog()[skip:max_posts + skip]
 
         max_rshares = self.converter.sp_to_rshares(whale_sp)
@@ -129,22 +227,13 @@ class Account(object):
             return None
         return np.mean(time_to_whale[:mean_of_recent])
 
-    def get_followers(self):
-        return [x['follower'] for x in self._get_followers(direction="follower")]
-
-    def get_following(self):
-        return [x['following'] for x in self._get_followers(direction="following")]
-
-    def _get_followers(self, direction="follower", last_user=""):
-        if direction == "follower":
-            followers = self.steem.rpc.get_followers(self.name, last_user, "blog", 100, api="follow")
-        elif direction == "following":
-            followers = self.steem.rpc.get_following(self.name, last_user, "blog", 100, api="follow")
-        if len(followers) == 100:
-            followers += self._get_followers(direction=direction, last_user=followers[-1][direction])[1:]
-        return followers
-
     def check_if_already_voted(self, post):
+        """
+        Check if already voted.
+
+        :param post:
+        :return:
+        """
         for v in self.history2(filter_by="vote"):
             vote = v['op']
             if vote['permlink'] == post['permlink']:
@@ -153,6 +242,11 @@ class Account(object):
         return False
 
     def curation_stats(self):
+        """
+        Curation statistics.
+
+        :return:
+        """
         trailing_24hr_t = time.time() - datetime.timedelta(hours=24).total_seconds()
         trailing_7d_t = time.time() - datetime.timedelta(days=7).total_seconds()
 
@@ -167,8 +261,8 @@ class Account(object):
             if parser.parse(event['timestamp'] + "UTC").timestamp() > trailing_24hr_t:
                 reward_24h += parse_payout(event['op']['reward'])
 
-        reward_7d = self.converter.vests_to_sp(reward_7d)
-        reward_24h = self.converter.vests_to_sp(reward_24h)
+        reward_7d = self.converter.vests_to_power(reward_7d)
+        reward_24h = self.converter.vests_to_power(reward_24h)
         return {
             "24hr": reward_24h,
             "7d": reward_7d,
@@ -179,7 +273,7 @@ class Account(object):
         num_winning_posts, post_count = self.number_of_winning_posts(payout_requirement=payout_requirement,
                                                                      max_posts=max_posts)
         return {
-            "name": self.name,
+            "name": self.account,
             "settings": {
                 "max_posts": max_posts,
                 "payout_requirement": payout_requirement,
@@ -187,7 +281,7 @@ class Account(object):
             "author": {
                 "post_count": post_count,
                 "winners": num_winning_posts,
-                "sp": int(self.get_sp()),
+                "sp": int(self.get_power()),
                 "rep": self.reputation(),
                 "followers": len(self.get_followers()),
                 "ttw": self.time_to_whale(max_posts=max_posts),
@@ -197,7 +291,7 @@ class Account(object):
 
     def virtual_op_count(self):
         try:
-            last_item = self.steem.rpc.get_account_history(self.name, -1, 0)[0][0]
+            last_item = self.golos.rpc.get_account_history(self.account, -1, 0)[0][0]
         except IndexError:
             return 0
         else:
@@ -219,7 +313,7 @@ class Account(object):
                 limit = batch_size
             else:
                 limit = batch_size - 1
-            history = self.steem.rpc.get_account_history(self.name, i, limit)
+            history = self.golos.rpc.get_account_history(self.account, i, limit)
             for item in history:
                 index = item[0]
                 if index >= max_index:
@@ -263,19 +357,19 @@ class Account(object):
         return self.history(filter_by, start=start_index)
 
     def get_account_votes(self):
-        return self.steem.rpc.get_account_votes(self.name)
+        return self.golos.rpc.get_account_votes(self.account)
 
     def get_withdraw_routes(self):
-        return self.steem.rpc.get_withdraw_routes(self.name, 'all')
+        return self.golos.rpc.get_withdraw_routes(self.account, 'all')
 
     def get_conversion_requests(self):
-        return self.steem.rpc.get_conversion_requests(self.name)
+        return self.golos.rpc.get_conversion_requests(self.account)
 
     @staticmethod
     def filter_by_date(items, start_time, end_time=None):
-        start_time = dateutil.parser.parse(start_time + "UTC").timestamp()
+        start_time = parser.parse(start_time + "UTC").timestamp()
         if end_time:
-            end_time = dateutil.parser.parse(end_time + "UTC").timestamp()
+            end_time = parser.parse(end_time + "UTC").timestamp()
         else:
             end_time = time.time()
 
@@ -285,23 +379,32 @@ class Account(object):
                 item_time = item['time']
             elif 'timestamp' in item:
                 item_time = item['timestamp']
-            timestamp = dateutil.parser.parse(item_time + "UTC").timestamp()
+            timestamp = parser.parse(item_time + "UTC").timestamp()
             if end_time > timestamp > start_time:
                 filtered_items.append(item)
 
         return filtered_items
 
 
-class Post(piston.steem.Post):
-    def __init__(self, post, steem=None):
-        if not steem:
-            steem = Node().default()
-        if isinstance(post, piston.steem.Post):
+class Post(PistonPost):
+    """
+    Enhanced Piston Post.
+    """
+    def __init__(self, post, chain=None):
+        if not chain:
+            chain = Node().default()
+        if isinstance(post, PistonPost):
             post = post.identifier
-        super(Post, self).__init__(steem, post)
+        super(Post, self).__init__(chain, post)
 
     @property
     def meta(self):
+        """
+        JSON metadata of the post.
+
+        :return: post metadata
+        :rtype: json
+        """
         meta = {}
         with suppress(Exception):
             meta_str = self.get("json_metadata", "")
@@ -309,18 +412,25 @@ class Post(piston.steem.Post):
         return meta
 
     def is_comment(self):
-        if len(self['title']) == 0:
-            return True
+        """
+        Return True if post is a comment. Post is a comment if it has an empty
+        title, its depth is greater than zero or it does have a parent author.
 
-        if self['depth'] > 0:
+        :return: True if post is a comment, false otherwise
+        :rtype: bool
+        """
+        if len(self["title"]) == 0 or self["depth"] > 0 \
+                or len(self["parent_author"]) > 0:
             return True
-
-        if len(self['parent_author']) > 0:
-            return True
-
-        return False
+        else:
+            return False
 
     def get_votes(self, from_account=None):
+        """
+
+        :param from_account:
+        :return:
+        """
         votes = []
         for vote in self['active_votes']:
             vote['time_elapsed'] = int(time_diff(self['created'], vote['time']))
@@ -372,10 +482,10 @@ class Post(piston.steem.Post):
 
 
 class Converter(object):
-    def __init__(self, steem=None):
-        if not steem:
-            steem = Node().default()
-        self.steem = steem
+    def __init__(self, chain=None):
+        if not chain:
+            chain = Node().default()
+        self.steem = chain
         self.CONTENT_CONSTANT = 2000000000000
 
     @simple_cache(base_cache, timeout=5 * 60)
@@ -390,7 +500,7 @@ class Converter(object):
             (parse_payout(info["total_vesting_shares"]) / 1e6)
         )
 
-    def vests_to_sp(self, vests):
+    def vests_to_power(self, vests):
         return vests * self.steem_per_mvests() / 1e6
 
     def sp_to_vests(self, sp):
