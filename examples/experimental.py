@@ -40,7 +40,12 @@ def update_witness():
         "maximum_block_size": 65536,
         "sbd_interest_rate": 100,
     }
-    tx = t.witness_update("kiwi", "<PUBLIC_POSTING_KEY>", "https://golos.io/@kiwi/witness", props, "<PRIVATE_ACTIVE_KEY>", sim_mode=False)
+    tx = t.witness_update("kiwi",
+                          "<PUBLIC_POSTING_KEY>",
+                          "https://golos.io/@kiwi/witness",
+                          props,
+                          "<PRIVATE_ACTIVE_KEY>",
+                          sim_mode=True)
     pprint(tx)
 
 
