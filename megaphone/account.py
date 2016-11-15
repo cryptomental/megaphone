@@ -32,8 +32,12 @@ class Account(object):
         self.account = account
         if not chaind:
             chaind = Node().default()
+        self.chaind = chaind
         self.rpc = chaind.rpc
-        self.blockchain_name = chaind.rpc.get_config()['BLOCKCHAIN_NAME']
+        self.blockchain_name = chaind.rpc.get_config()['STEEMIT_SYMBOL']
+        if not self.rpc.get_account(account):
+            raise AccountError("Account %s does not exist on %s blockchain!"
+                               % (account, self.blockchain_name))
         self.converter = Converter(chaind)
 
         # caches
@@ -151,7 +155,10 @@ class Account(object):
             def _get_blog(rpc, user):
                 state = rpc.get_state("/@%s/blog" % user)
                 posts = state["accounts"][user].get("blog", [])
-                return [PistonPost(rpc, "@%s" % x) for x in posts if x]
+                if self.blockchain_name == "STEEM":
+                    return [PistonPost(self.chaind, "%s" % x) for x in posts if x]
+                elif self.blockchain_name == "GOLOS":
+                    return [PistonPost(self.chaind, "@%s/%s" % (user, x)) for x in posts if x]
             self._blog = _get_blog(self.rpc, self.account)
         return self._blog
 
