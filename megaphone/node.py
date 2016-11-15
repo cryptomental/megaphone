@@ -3,15 +3,27 @@ import websocket
 from piston.steem import Steem as Chain
 
 
+class NodeError(RuntimeError):
+    pass
+
+
 class Node(object):
     # this allows us to override the steam instance for all instances of Node
     # and therefore all users of Node().default()
     _default = None
 
-    def __init__(self):
+    def __init__(self, blockchain="steem"):
+        supported_blockchains = ["steem", "golos"]
+        if blockchain.lower() not in supported_blockchains:
+            raise NodeError("Blockchain %s not supported!" % blockchain)
+
+        public_nodes = {
+            "golos": ["wss://node.golos.ws"],
+            "steem": ["wss://node.steem.ws", "wss://this.piston.rocks"]}
+
         self._nodes = {
             "local": ["ws://127.0.0.1:8090"],
-            "public": ["wss://node.golos.ws"],
+            "public": public_nodes[blockchain],
         }
 
         self._apis = [
