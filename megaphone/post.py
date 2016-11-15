@@ -1,10 +1,11 @@
-from piston.steem import Post as PistonPost
-from megaphone.node import Node
-from contextlib import suppress
 import json
-from megaphone.helpers import parse_payout, time_diff
 import time
+from contextlib import suppress
 from dateutil import parser
+from piston.steem import Post as PistonPost
+
+from megaphone.helpers import parse_payout, time_diff
+from megaphone.node import Node
 
 
 class PostError(RuntimeError):
