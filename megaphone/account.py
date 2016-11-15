@@ -20,7 +20,7 @@ class Account(object):
     Social blockchain account.
     Currently supported: STEEM and GOLOS.
     """
-    def __init__(self, account, chaind=None, blockchain_name="STEEM"):
+    def __init__(self, account, chaind=None):
         """
         Initialize Account object.
 
@@ -29,11 +29,11 @@ class Account(object):
         :param chaind: Blockchain node instance (steemd/golosd)
         :type chaind: :py:class:`Node`
         """
-        self.blockchain_name = blockchain_name
-        if not chaind:
-            chaind = Node().default(blockchain_name=blockchain_name)
-        self.rpc = chaind.rpc
         self.account = account
+        if not chaind:
+            chaind = Node().default()
+        self.rpc = chaind.rpc
+        self.blockchain_name = chaind.rpc.get_config()['BLOCKCHAIN_NAME']
         self.converter = Converter(chaind)
 
         # caches
