@@ -22,7 +22,7 @@ while True:
         }
         tx = t.witness_update(witness_name=witness_name, signing_key=None,
                               url="https://golos.io/@kiwi/witness", props=props,
-                              wif=active_key, sim_mode=False)
+                              wif=active_key, sim_mode=True)
 
         pprint(tx)
         quit("Witness %s Disabled!" % witness_name)
