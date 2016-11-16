@@ -12,7 +12,7 @@ VERSION = '1.3.3'
 setup(
     name='megaphone',
     version=VERSION,
-    description='Python Utilities for parsing GOLOS blockchain, forked from SteemTools by @furion',
+    description='Python Utilities for graphene based social blockchains, forked from SteemTools by @furion',
     long_description=open('README.md').read(),
     url='https://github.com/cryptomental/megaphone',
     author='@furion',
@@ -26,7 +26,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',
     ],
-    keywords='golos',
+    keywords=['steem', 'golos'],
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
@@ -38,9 +38,8 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'steem-piston', 'tqdm',
-        'python-dateutil',
-        'numpy', 'requests', 'grequests', 'werkzeug', 'funcy',
+        'steem-piston', 'python-dateutil', 'numpy', 'requests', 'grequests',
+        'werkzeug', 'funcy',
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

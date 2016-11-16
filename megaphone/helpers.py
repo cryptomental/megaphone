@@ -2,7 +2,6 @@ import datetime
 import re
 import time
 
-import dateutil
 from dateutil import parser
 
 from funcy import contextmanager, decorator
@@ -60,7 +59,7 @@ def time_elapsed(time1):
 
 
 def parse_time(block_time):
-    return dateutil.parser.parse(block_time + "UTC").astimezone(datetime.timezone.utc)
+    return parser.parse(block_time + "UTC").astimezone(datetime.timezone.utc)
 
 
 def translate_tag(tag):
@@ -85,3 +84,31 @@ def translate_tag(tag):
     for l, i in table:
         tag = i.join(tag.split(l))
     return prefix + tag
+
+
+def filter_by_date(items, start_time, end_time=None):
+    """
+    Filter items by date.
+
+    :param items:
+    :param start_time:
+    :param end_time:
+    :return: filtered items
+    """
+    start_time = parser.parse(start_time + "UTC").timestamp()
+    if end_time:
+        end_time = parser.parse(end_time + "UTC").timestamp()
+    else:
+        end_time = time.time()
+
+    filtered_items = []
+    for item in items:
+        if 'time' in item:
+            item_time = item['time']
+        elif 'timestamp' in item:
+            item_time = item['timestamp']
+        timestamp = parser.parse(item_time + "UTC").timestamp()
+        if end_time > timestamp > start_time:
+            filtered_items.append(item)
+
+    return filtered_items

@@ -1,6 +1,6 @@
 import stopwatch
 from megaphone.node import Node
-from megaphone.base import Account
+from megaphone.account import Account
 
 
 # # default node overloading
