@@ -1,18 +1,19 @@
 from megaphone.blockchain import Blockchain
+from megaphone.node import Node
 
-# parse the entire blockchain
-for event in Blockchain().replay():
-    print("Event: %s" % event['op_type'])
-    print("Time: %s" % event['timestamp'])
-    print("Body: %s\n" % event['op'])
+blockchains = [Blockchain(Node("steem").default()),
+               Blockchain(Node("golos").default())]
 
 # give me just payments from specific day until now
-b = Blockchain()
-history = b.replay(
-    start_block=b.get_block_from_time("2016-11-01T00:00:00"),
-    end_block=b.get_current_block(),
-    filter_by=['transfer']
-)
-for event in history:
-    payment = event['op']
-    print("@%s sent %s to @%s" % (payment['from'], payment['amount'], payment['to']))
+for b in blockchains:
+    print("-" * 80)
+    print("Blockchain: %s" % b.blockchain_name)
+    history = b.replay(
+        start_block=b.get_block_from_time("2016-10-18T14:00:00"),
+        end_block=b.get_block_from_time("2016-10-18T14:15:00"),
+        filter_by=['transfer']
+    )
+    for event in history:
+        payment = event['op']
+        print("%s : @%s sent %s to @%s" % (event['timestamp'], payment['from'],
+                                           payment['amount'], payment['to']))
