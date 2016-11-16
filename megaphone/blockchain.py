@@ -7,10 +7,12 @@ from .node import Node
 
 
 class Blockchain(object):
-    def __init__(self, steem=None):
-        if not steem:
-            steem = Node().default()
-        self.steem = steem
+    def __init__(self, chaind=None):
+        if not chaind:
+            chaind = Node().default()
+        self.blockchain_name = chaind.rpc.get_config()['STEEMIT_SYMBOL']
+        self.chaind = chaind
+        self.rpc = chaind.rpc
 
     @staticmethod
     def parse_block(block, block_id, verbose=False, **kwargs):
@@ -42,7 +44,7 @@ class Blockchain(object):
         :return: Returns a generator
         """
         # Let's find out how often blocks are generated!
-        config = self.steem.rpc.get_config()
+        config = self.rpc.get_config()
         block_interval = config["STEEMIT_BLOCK_INTERVAL"]
 
         # last confirmed vs head
@@ -51,12 +53,12 @@ class Blockchain(object):
         current_block = start_block
 
         while True:
-            props = self.steem.rpc.get_dynamic_global_properties()
+            props = self.rpc.get_dynamic_global_properties()
             last_confirmed_block = props[last_block_mode]
 
             while current_block < last_confirmed_block:
 
-                block = self.steem.rpc.get_block(current_block)
+                block = self.rpc.get_block(current_block)
                 if block is None:
                     raise LookupError('Block is None. Are you trying to fetch a block from the future?')
                 for operation in self.parse_block(block, current_block, **kwargs):
@@ -81,10 +83,10 @@ class Blockchain(object):
             time.sleep(block_interval)
 
     def get_current_block(self):
-        return self.steem.rpc.get_dynamic_global_properties()['last_irreversible_block_num']
+        return self.rpc.get_dynamic_global_properties()['last_irreversible_block_num']
 
     def get_block_time(self, block_num, verbose=False):
-        block = self.steem.rpc.get_block(block_num)
+        block = self.rpc.get_block(block_num)
         time = block['timestamp']
         if verbose:
             print("Block %d was minted on: %s" % (block_num, time))
@@ -116,7 +118,7 @@ class Blockchain(object):
         return int(guess_block)
 
     def get_all_usernames(self, last_user=-1):
-        usernames = self.steem.rpc.lookup_accounts(last_user, 1000)
+        usernames = self.rpc.lookup_accounts(last_user, 1000)
         if len(usernames) == 1000:
             usernames += self.get_all_usernames(usernames[-1])[1:]
 
