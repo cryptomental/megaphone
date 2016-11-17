@@ -105,3 +105,36 @@ class Ticker(object):
     @staticmethod
     def calc_spread(bid, ask):
         return (1 - (Decimal(bid) / Decimal(ask))) * 100
+
+
+class Gold(object):
+    """
+    Return value of 1mg Gold in USD.
+    """
+
+    URL = "http://data-asg.goldprice.org/GetData/USD-XAU/1"
+    GRAM_PER_OZ = 31.1034768
+
+    @staticmethod
+    def price_oz():
+        """
+        Return price of 1 ounce of Gold in USD
+
+        :return: XAU OZ price in USD, 0.0 if incorrect response
+        :rtype float
+        """
+        rs = grequests.get(Gold.URL, timeout=2)
+        response = grequests.map([rs], exception_handler=lambda x, y: "")[0]
+        if hasattr(response, "status_code") and response.status_code == 200:
+            return float(response.json()[0].split(",")[1])
+        return 0.0
+
+    @staticmethod
+    def price_mg():
+        """
+        Return price of 1mg of Gold in USD
+
+        :return: XAU 1mg price in USD
+        :rtype: float
+        """
+        return Gold.price_oz() / Gold.GRAM_PER_OZ / 1000.0
