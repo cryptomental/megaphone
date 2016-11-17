@@ -5,5 +5,6 @@ __all__ = [
     'helpers',
     'markets',
     'node',
-    'post'
+    'post',
+    'tickers'
 ]
