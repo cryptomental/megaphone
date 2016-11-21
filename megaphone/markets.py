@@ -3,10 +3,10 @@ import time
 import numpy as np
 from megaphone.helpers import parse_payout
 from megaphone.node import Node
-from megaphone.tickers import Tickers
+from megaphone.ticker import Ticker
 
 
-class Markets(Tickers):
+class Markets(Ticker):
     def __init__(self, cache_timeout=60, steem=None):
         if not steem:
             steem = Node().default()
@@ -26,17 +26,17 @@ class Markets(Tickers):
 
     def btc_usd(self):
         if (self._btc_usd is None) or self._has_cache_expired():
-            self._btc_usd = self.btc_usd_ticker()
+            self._btc_usd = self.price("btc/usd")
         return self._btc_usd
 
     def steem_btc(self):
         if (self._steem_btc is None) or self._has_cache_expired():
-            self._steem_btc = self.steem_btc_ticker()
+            self._steem_btc = self.price("steem/btc")
         return self._steem_btc
 
     def sbd_btc(self):
         if (self._sbd_btc is None) or self._has_cache_expired():
-            self._sbd_btc = self.sbd_btc_ticker()
+            self._sbd_btc = self.price("sbd/btc")
         return self._sbd_btc
 
     def steem_sbd_implied(self):
