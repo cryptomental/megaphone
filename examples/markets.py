@@ -1,4 +1,4 @@
-from megaphone.markets import Tickers, Markets
+from megaphone.markets import Markets
 
 if __name__ == "__main__":
     m = Markets()

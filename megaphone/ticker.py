@@ -14,24 +14,27 @@ class Ticker(object):
     URLS = {
         "btc-e": "https://btc-e.com/api/2/%s/ticker",
         "bitfinex": "https://api.bitfinex.com/v1/pubticker/%s",
+        "bittrex": "https://bittrex.com/api/v1.1/public/getmarketsummary?market=%s",
         "bitstamp": "https://www.bitstamp.net/api/v2/ticker/%s",
         "coinbase": "https://api.exchange.coinbase.com/products/%s/ticker",
-        "okcoin": "https://www.okcoin.com/api/v1/ticker.do?symbol=%s"
+        "poloniex": "https://poloniex.com/public?command=returnTicker&currencyPair=%s"
     }
     RESPONSES = {
         "price": {
             "btc-e": "avg",
             "bitfinex": "last_price",
+            "bittrex": "Last",
             "bitstamp": "last",
             "coinbase": "price",
-            "okcoin": "last"
+            "poloniex": "last"
         },
         "volume": {
             "btc-e": "vol_cur",
             "bitfinex": "volume",
+            "bittrex": "BaseVolume",
             "bitstamp": "volume",
             "coinbase": "volume",
-            "okcoin": "vol"
+            "poloniex": "baseVolume"
         }
     }
 
@@ -53,9 +56,15 @@ class Ticker(object):
         if "/" not in currency_pair:
             raise TickerError("Currency pair incorrect format."
                               "Use xxx/yyy e.g. btc/usd!")
-        if exchange_name in ["btc-e", "okcoin"]:
+        if exchange_name in ["bittrex", "poloniex"]:
+            currency_pair = currency_pair.replace("usd", "usdt").upper()
+        if exchange_name == "bittrex":
+            return "{1}-{0}".format(*currency_pair.split("/"))
+        elif exchange_name == "poloniex":
+            return "{1}_{0}".format(*currency_pair.split("/"))
+        elif exchange_name in ["btc-e"]:
             return currency_pair.replace("/", "_")
-        elif exchange_name == "coinbase":
+        elif exchange_name in ["coinbase"]:
             return currency_pair.replace("/", "-")
         else:
             return currency_pair.replace("/", "")
@@ -86,9 +95,17 @@ class Ticker(object):
                            and x.json()]
 
         for response in valid_responses:
+            if "error" in response.json() and \
+                    "invalid" in response.json()["error"]:
+                continue
             exchange = urls_rev[response.url]
             if exchange in ["okcoin", "btc-e"]:
                 data = response.json()["ticker"]
+            elif exchange == "bittrex":
+                data = response.json()["result"][0]
+            elif exchange == "poloniex":
+                poloniex_symbol = Ticker.get_ticker_symbol(pair, "poloniex")
+                data = response.json()[poloniex_symbol]
             else:
                 data = response.json()
             price = float(data[Ticker.RESPONSES["price"][exchange]])
