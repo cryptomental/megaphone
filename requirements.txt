@@ -1,0 +1,2 @@
+-e git+https://github.com/dropbox/stopwatch.git#egg=stopwatch
+
